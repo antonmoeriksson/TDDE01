@@ -1,4 +1,4 @@
-knearest=function(data,k,newdata) {
+  knearest=function(data,k,newdata) {
   
   n1=dim(data)[1]
   n2=dim(newdata)[1]
@@ -32,4 +32,15 @@ ROC=function(Y, Yfit, p){
   }
   return (list(TPR=TPR,FPR=FPR))
 }
+
+importData=function(fileName="spambase.csv"){
+  mailData <- read.csv(fileName)
+  n <- dim(mailData)
+  set.seed(12345)
+  id <- sample(1:n[1], floor(n * 0.5))
+  train <- mailData[id,]
+  test <- mailData[-id,]
+  print("Done import data.")
+}
+
 
