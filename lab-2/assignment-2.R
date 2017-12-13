@@ -77,3 +77,29 @@ points(2:11, validation_score[2:11], type = "b", col = "red")
 optimal_tree = prune.tree(best_fit, best = 4)
 plot(optimal_tree)
 text(optimal_tree)
+
+summary(optimal_tree)
+
+# II-iv
+naive_bayes = naiveBayes(good_bad ~ ., train)
+summary(naive_bayes)
+naive_train = predict(naive_bayes, newdata = train)
+naive_test = predict(naive_bayes, newdata = test)
+
+misclassification_rate_matrix(train, naive_train)
+misclassification_rate_matrix(test, naive_test)
+
+# II-v
+
+predict_naive_train_raw = predict(naive_bayes, newdata = train, type = "raw")
+predict_naive_test_raw = predict(naive_bayes, newdata = test, type = "raw")
+
+naive_test_raw = ifelse((predict_naive_test_raw[,1] / predict_naive_test_raw[,2] > 10),
+                        "good", "bad")
+
+naive_train_raw = ifelse((predict_naive_train_raw[,1] / predict_naive_train_raw[,2] > 10),
+                        "good", "bad")
+
+mcr_naive_test_raw = misclassification_rate_matrix(test, naive_test_raw)
+
+mcr_naive_train_raw = misclassification_rate_matrix(train, naive_train_raw)
