@@ -6,7 +6,7 @@
 
 # Import data. III-i
 setwd("/home/ame/git/tdde01/TDDE01/lab-2")
-
+set.seed(12345)
 library(tree)
 
 plot_tree <- function(tree) {
@@ -20,7 +20,7 @@ state_ordered = state[order(state$MET),]
 n = dim(state_ordered)[1]
 tree_control = tree.control(n, minsize = 8)
 
-plot(state_ordered$MET, state_ordered$EX, xlab = "MET", ylab = "EX", main = "MET vs EX " )
+plot(state_ordered$MET, state_ordered$EX, xlab = "MET", ylab = "EX", main = "MET vs EX ", col = "blue" )
 
 #  III-ii
 fit_tree = tree(EX ~ MET, data = state_ordered, control = tree_control)
@@ -37,10 +37,12 @@ plot_tree(prune_fit_tree)
 predict_prune_fit_tree = predict(prune_fit_tree, newdata = state_ordered)
 
 plot(state_ordered$MET, state_ordered$EX, xlab = "MET", ylab = "EX", col = "Green")
-points(state_ordered$MET, predict_prune_fit_tree, col = "darkblue")
+points(state_ordered$MET, predict_prune_fit_tree, col = "darkblue", type = "b")
 legend(x = "top", col = c("Green", "Darkblue"), lty = c(1,1), legend = c("Original Values", "Predictions")) 
 
 original_minus_predicted = state_ordered$EX - predict_prune_fit_tree
+hist(state_ordered$EX, col = "darkblue")
+hist(resid(prune_fit_tree))
 hist(original_minus_predicted, col = "darkblue", xlim = c(-80, 125))
 
 # III-iii
@@ -59,6 +61,7 @@ non_parametric_bootstraping <- function(data, ind) {
 bootstraping_non_parametric = boot(data = state_ordered, statistic = non_parametric_bootstraping, R = 1000)
 envelop_NPB = envelope(bootstraping_non_parametric, level = 0.95)
 
+
 plot_confidance_band <- function(envelop, fit, name) {
   plot(state_ordered$MET, state_ordered$EX, main = name, xlab = "MET", ylab = "EX", col = "darkblue",
        ylim = c(200,400))
@@ -67,7 +70,7 @@ plot_confidance_band <- function(envelop, fit, name) {
   points(state_ordered$MET, envelop$point[2, ], col = "red", type = "l")
 }
 
-plot_confidance_band(envelop_NPB, predict_prune_fit_tree, "test")
+plot_confidance_band(envelop_NPB, predict_prune_fit_tree, "Envelop of NPB")
 
 # III-iv
 
@@ -91,10 +94,41 @@ residual <- function(mle) {
   return (state_ordered$EX - fit_func)
 }
 
+prediction_band <- function(data_in) {
+  fitting = tree(EX ~ MET, data = data_in, control = tree_control)
+  best_fitting = prune.tree(fitting, best = best)
+  pb_predict = predict(fitting, newdata = state_ordered)
+  pp = rnorm(n, pb_predict, sd(data_in$EX - pb_predict))
+  return(pp)
+}
+pb = boot(data = state_ordered, statistic = prediction_band, 
+                               R = 1000, ran.gen = rng, mle = prune.tree(fit_tree, best = best), sim = "parametric")
+envelop3 = envelope(pb)
+
+
+
+
 bootstraping_parametric = boot(data = state_ordered, statistic = parametric_bootstraping, 
                                R = 1000, ran.gen = rng, mle = prune.tree(fit_tree, best = best), sim = "parametric")
 envelop_PB = envelope(bootstraping_parametric)
-plot_confidance_band(envelop_PB, predict_prune_fit_tree, "test2")
+plot_confidance_band(envelop_PB, predict_prune_fit_tree, "Envelop of PB")
 
+# Test
+plot(state_ordered$MET, state_ordered$EX, col= "pink",
+     xlab = "MET", ylab = "EX")
+points(state_ordered$MET, envelop_PB$point[2,], col = "green", type = "l")
+points(state_ordered$MET, envelop_PB$point[1,], col = "green", type = "l")
+
+
+points(state_ordered$MET, envelop_NPB$point[2,], col = "red", type = "l")
+points(state_ordered$MET, envelop_NPB$point[1,], col = "red", type = "l")
+
+points(state_ordered$MET, envelop3$point[2,], col = "orange", type = "l")
+points(state_ordered$MET, envelop3$point[1,], col = "orange", type = "l")
+
+
+points(state_ordered$MET, predict_prune_fit_tree, col = "darkblue", type = "b")
+legend(x = "top", col = c("Pink", "Green", "Red", "Orange", "Red"), lty = c(1, 1, 1, 1),
+       legend = c("Data", "Parametric BS", "None-Parametric BS", "Prediction" )) 
 
 

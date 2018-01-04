@@ -18,6 +18,7 @@ id = sample(1:n, floor(n * 0.5))
 train = credit_score[id, ]
 test_tmp = credit_score[-id, ]
 
+
 n_2 = dim(test_tmp)[1]
 id_2 = sample(1:n_2, floor(n_2 * 0.5))
 validation = test_tmp[id_2, ]
@@ -57,7 +58,7 @@ misclassification_rate_matrix(train, deviance_predict_train)
 
 # Task II-iii
 summary(deviance_fit)
-
+plot(deviance_fit)
 best_fit = deviance_fit
 
 traning_score = c()
@@ -71,7 +72,7 @@ for (index in 2:11) {
   validation_score[index] = deviance(predict_tree)
 }
 
-plot(2:11, traning_score[2:11], type = "b", col = "green", ylim = c(250, 600))
+plot(2:11, traning_score[2:11], type = "b", col = "green", ylim = c(250, 600), main = "Find best (lowest) score")
 points(2:11, validation_score[2:11], type = "b", col = "red")
 
 optimal_tree = prune.tree(best_fit, best = 4)
@@ -94,11 +95,20 @@ misclassification_rate_matrix(test, naive_test)
 predict_naive_train_raw = predict(naive_bayes, newdata = train, type = "raw")
 predict_naive_test_raw = predict(naive_bayes, newdata = test, type = "raw")
 
-naive_test_raw = ifelse((predict_naive_test_raw[,1] / predict_naive_test_raw[,2] > 10),
+# OLD
+naive_test_raw = ifelse((predict_naive_test_raw[,2] / predict_naive_test_raw[,1] > 10),
                         "good", "bad")
 
-naive_train_raw = ifelse((predict_naive_train_raw[,1] / predict_naive_train_raw[,2] > 10),
+naive_train_raw = ifelse((predict_naive_train_raw[,2] / predict_naive_train_raw[,1] > 10),
                         "good", "bad")
+
+# New
+#naive_test_raw_loss = predict_naive_test_raw[,2] / predict_naive_test_raw[,1] > 10
+#naive_test_raw_loss_con = table(PREDICTION=predict_naive_test_raw,TRUTH=train$good_bad)
+#mcr_test = 1 - sum(diag(naive_test_raw_loss_con)) / sum(naive_test_raw_loss_con)
+
+summary(naive_train_raw)
+summary(naive_test_raw)
 
 mcr_naive_test_raw = misclassification_rate_matrix(test, naive_test_raw)
 
