@@ -28,7 +28,7 @@ test_new = test[-2,]
 train_new = train[-2,]
 
 new_tree_fit = tree(Class ~., data = train_new)
-new_predict_train = predict(tree_fit, newdata = train_new, type = "class")
+new_predict_train = predict(tree_fit, newdata = train_new)
 
 plot(new_tree_fit)
 text(new_tree_fit)
@@ -41,10 +41,11 @@ points(log(cross_validated_fit_tree$k),cross_validated_fit_tree$dev, col =" gree
 
 plot(y = cross_validated_fit_tree$dev, x = 1:7, type = "b", col = "green", main = "Find best (lowest) score")
 
-prune_tree = prune.tree(tree_fit, best = 3)
+prune_tree = prune.tree(tree_fit, best = 5)
 plot(prune_tree)
 text(prune_tree)
 summary(prune_tree)
+
 library(glmnet)
 x_train = model.matrix(~ .-1, train[,-16])
 model=c()
@@ -54,8 +55,26 @@ plot(model)
 coef(model, s="lambda.min")
 summary(model)
 
+covariates = scale ((crx) [ ,c(2,3, 8,14,15)])
+
+response = scale ( crx [ , 16])
+
+lambdas = seq (-6.5, 0, 0.1)
+lambdas = exp(lambdas)
+MLasso = glmnet(as.matrix(covariates), response, alpha = 1,
+                       lambda = lambdas , family = "gaussian")
+plot(MLasso , xvar = "lambda" , label = TRUE)
+plot(CV_MLasso , xvar = "lambda" , label = TRUE)
+
+summary(MLasso)
+CV_MLasso = cv.glmnet(as.matrix(covariates), response, alpha = 1,
+                lambda = lambdas , family = "gaussian")
+plot(log(CV_MLasso$lambda) , CV_MLasso$cvm,  xlab = "lambda")
 
 
+coef(CV_MLasso, s ="lambda.min")
+
+min_lamda = MLasso$lambda[which.min(MLasso$lambda)]
 
 # 2.
 library(mboost)
@@ -66,7 +85,7 @@ set.seed(1234567890)
 m <- blackboost(Bodyfat_percent ~ Waist_cm+Weight_kg, data=bf)
 mstop(m)
 cvf <- cv(model.weights(m), type="kfold")
-cvm <- cvrisk(m, folds=cvf, grid=1:100)
+cvm <- cvrisk(m, folds=cvf, grid=1:20)
 plot(cvm)
 mstop(cvm)
 
